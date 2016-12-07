@@ -7,6 +7,7 @@ sip.setapi('QString', 1)
 
 import sys
 import os
+import time
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt, QDir
 from PyQt4.QtGui import *
@@ -14,6 +15,7 @@ import exifread
 import ImageTable
 from os import listdir
 from os.path import isfile, join
+
 #from PyQt4 import QtCore, QtGui
 
 
@@ -54,6 +56,14 @@ class MyButton(QPushButton):
     def close(self):
         self
 
+    def deleteImageTable(self):
+        global myBrowser
+        myBrowser.clearTable()
+
+    def InsertARow(self):
+        global myBrowser
+        myBrowser.model.insertRow(0, "testing ")
+
 
 class Browser( QWidget):
     def __init__(self):
@@ -82,6 +92,8 @@ class Browser( QWidget):
         self.closeButton = MyButton("Exit")
         self.runButton = MyButton("Run")
         self.dirButton = MyButton("Set Dir")
+        self.clearButton = MyButton("Clear")
+        self.insertButton = MyButton("Insert")
 
 
         # Create textboxes
@@ -137,6 +149,8 @@ class Browser( QWidget):
         ButtonBar.addWidget(self.closeButton)
         ButtonBar.addWidget(self.runButton)
         ButtonBar.addWidget(self.dirButton)
+        ButtonBar.addWidget(self.clearButton)
+        ButtonBar.addWidget(self.insertButton)
         ButtonBar.setAlignment(Qt.AlignLeft)
 
         self.tableView = QtGui.QTableView()
@@ -158,6 +172,16 @@ class Browser( QWidget):
         self.setLayout(TopLevelLayout)
 
         self.closeButton.clicked.connect(self.close)
+        self.clearButton.clicked.connect(MyButton.deleteImageTable)
+        self.insertButton.clicked.connect(self.close)
+
+    def clearTable(self):
+        self.model.removeAllRows()
+
+    def insertOneRow(self):
+        label = time.strftime('%X %x %Z')
+        label = "test" + label
+        self.model.insertRow(0, label)
 
 
     def on_treeView_clicked(self, index):
@@ -167,11 +191,26 @@ class Browser( QWidget):
         fileName = self.fileSystemModel.fileName(indexItem)
         filePath = self.fileSystemModel.filePath(indexItem)
 
+        # f = open(str(filePath), 'rb')
+        # tags = exifread.process_file(f, stop_tag='DateTimeOriginal')
+        # f.close()
+
         if os.path.isdir(str(filePath)):
             onlyfiles = [f for f in listdir(str(filePath)) if isfile(join(str(filePath), f))]
-            self.model.removeAllRows()
-            for file in onlyfiles:
-                self.model.insertRow(0, str(file))
+            if self.model.removeAllRows() == True:
+                self.tableView.clearSpans()
+                for file in onlyfiles:
+                    f = open(join(str(filePath), file), 'rb')
+                    tags = exifread.process_file(f, stop_tag='DateTimeOriginal', strict=True)
+                    f.close()
+                    if 'EXIF DateTimeOriginal' in tags:
+                    # self.model.insertRow(0, str(file)+time.strftime('%X %x %Z'))
+                        self.model.insertRow(0, str(file), str(tags['EXIF DateTimeOriginal']))
+                    else:
+                        self.model.insertRow(0, str(file), "No date tag")
+            else:
+                print("Whoops")
+
 
         self.fileNametextbox.setText(fileName)
         self.pathNametextbox.setText(filePath)
@@ -182,9 +221,7 @@ class Browser( QWidget):
         #self.label.resize(640,480)
 
         self.label2.ChangePixmap(filePath)
-        f = open(str(filePath), 'rb')
-        tags = exifread.process_file(f)
-        f.close()
+
 
         self.exifLabel.setText("")
         tagStr = ""
@@ -201,6 +238,7 @@ class Browser( QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    main = Browser()
-    main.show()
+    myBrowser = Browser()
+
+    myBrowser.show()
 sys.exit(app.exec_())
