@@ -1,3 +1,8 @@
+import sip
+# switch on QString in Python3
+sip.setapi('QString', 1)
+
+
 from PyQt4 import QtGui, QtCore, uic
 
 
@@ -95,10 +100,10 @@ class ImageTableModel(QtCore.QAbstractTableModel):
 
         return True
 
-    def insertRow(self, position=0, fileName="default.jpg", parent=QtCore.QModelIndex()):
-        self.beginInsertRows(parent, 0, 1)
+    def insertRow(self, position=0, fileName="default.jpg", dateTime="1/1/1900", parent=QtCore.QModelIndex()):
+        self.beginInsertRows(parent, 0, 0)
 
-        newValue = [fileName, "Date Taken", "New Name"]
+        newValue = [fileName, dateTime, "New Name"]
         self.__images.insert(0, newValue)
 
         self.endInsertRows()
