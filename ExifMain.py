@@ -15,7 +15,7 @@ import exifread
 import ImageTable
 from os import listdir
 from os.path import isfile, join
-
+from datetime import datetime
 #from PyQt4 import QtCore, QtGui
 
 
@@ -154,12 +154,17 @@ class Browser( QWidget):
         ButtonBar.setAlignment(Qt.AlignLeft)
 
         self.tableView = QtGui.QTableView()
+        self.tableView.setSortingEnabled(True)
+
         self.tableView.show()
-        headers = ["Old Image Name", "Date Taken", "New Image name"]
+
+        headers = ["Old Image Name", "Date Taken", "DateTime", "New Image name"]
         rowCount = 4
-        tableData0 = [["testing.jpg", "03/05/1964", "image 1 1964"]for j in range(rowCount)]
+        default_datetime = datetime.strptime('1964:05:03 12:34:56', '%Y:%m:%d %H:%M:%S')
+        tableData0 = [["testing.jpg", "03/05/1964", default_datetime, "image 1 1964"]for j in range(rowCount)]
         self.model = ImageTable.ImageTableModel(tableData0, headers)
         self.tableView.setModel(self.model)
+        self.tableView.setColumnHidden(2, True)
 
         #Add the left and right layouts into the top level layout
         TopLevelPanelLayout.addLayout(LeftPanelLayout)
@@ -225,6 +230,9 @@ class Browser( QWidget):
 
         self.exifLabel.setText("")
         tagStr = ""
+        f = open(str(filePath), 'rb')
+        tags = exifread.process_file(f, stop_tag='DateTimeOriginal', strict=True)
+        f.close()
         for tag in tags.keys():
             if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
                 # print
