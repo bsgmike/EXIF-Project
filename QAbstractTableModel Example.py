@@ -64,11 +64,18 @@ class MyListModel(QtCore.QAbstractTableModel):
 
             pixmap = None
             # value is image path as key
-            if self.pixmap_cache.has_key(value) == False:
-                pixmap=self.generatePixmap(value)
-                self.pixmap_cache[value] =  pixmap
-            else:
-                pixmap = self.pixmap_cache[value]
+            # if self.pixmap_cache.has_key(value) == False:
+            pixmap = self.pixmap_cache.get(value)
+            if pixmap == None:
+                pixmap = self.generatePixmap(value)
+                self.pixmap_cache[value] = pixmap
+
+
+            # if value in self.pixmap_cache is False:
+            #     pixmap=self.generatePixmap(value)
+            #     self.pixmap_cache[value] =  pixmap
+            # else:
+            #     pixmap = self.pixmap_cache[value]
             return QtGui.QImage(pixmap).scaled(self._thumbRes[0],self._thumbRes[1],
                 QtCore.Qt.KeepAspectRatio)
 
@@ -128,17 +135,17 @@ class MyTableView(QtGui.QTableView):
         self.setGeometry(0,0,sw,sh)
         self.showFullScreen()
 
-        thumbWidth = 300
-        thumbheight = 420
+        thumbWidth = 320
+        thumbheight = 240
         col = sw/thumbWidth
         self.setColumnWidth(thumbWidth, thumbheight)
         crntDir = "/Users/UserName/Pictures/"
-        crntDir = r"C:\Users\mbowley\Pictures\personal\small"
+        crntDir = r"C:\My Pictures\best\Beltring\2008"
         # create table
         list_data = []
         philes = os.listdir(crntDir)
         for phile in philes:
-            if phile.endswith(".png") or phile.endswith("jpg"):
+            if phile.endswith(".png") or phile.endswith(".jpg") or phile.endswith(".JPG"):
                 list_data.append(os.path.join(crntDir, phile))
         # _twoDLst = convertToTwoDList(list_data, col)
         _twoDLst = convertToTwoDList(list_data, int(round(col)))
