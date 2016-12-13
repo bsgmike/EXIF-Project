@@ -8,6 +8,7 @@ sip.setapi('QString', 1)
 import sys
 import os
 import time
+
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import Qt, QDir
 from PyQt4.QtGui import *
@@ -16,6 +17,10 @@ import ImageTable
 from os import listdir
 from os.path import isfile, join
 from datetime import datetime
+from PIL import Image
+from PIL.ImageQt import ImageQt
+
+
 #from PyQt4 import QtCore, QtGui
 
 
@@ -27,21 +32,33 @@ class ImageLabel(QtGui.QLabel):
         #QLabel.__init__()
         super(ImageLabel, self).__init__()
         self.setFrameStyle(QFrame.StyledPanel)
-        self.pixmap = QPixmap(img)
+        # self.pixmap = QPixmap(img)
+
+        self.size = 64, 64
+        self.im = Image.open(img)
+        self.im.thumbnail(self.size)
+
+
 
     def paintEvent(self, event):
-        size = self.size()
+        # size = self.size()
         painter = QtGui.QPainter(self)
         point = QtCore.QPoint(0,0)
-        scaledPix = self.pixmap.scaled(size, Qt.KeepAspectRatio, transformMode = Qt.SmoothTransformation)
+        # scaledPix = self.pixmap.scaled(size, Qt.KeepAspectRatio, transformMode = Qt.SmoothTransformation)
         # start painting the label from left upper corner
-        point.setX((size.width() - scaledPix.width())/2)
-        point.setY((size.height() - scaledPix.height())/2)
+        # point.setX((size.width() - scaledPix.width())/2)
+        # point.setY((size.height() - scaledPix.height())/2)
         #print point.x(), ' ', point.y()
-        painter.drawPixmap(point, scaledPix)
+        myQtImage = ImageQt(self.im)
+        pixmap = QtGui.QPixmap.fromImage(myQtImage)
+        label = QtGui.QLabel('', self)
+        label.setPixmap(pixmap)
+        painter.drawPixmap(point,pixmap)
 
     def ChangePixmap(self, img):
-        self.pixmap = QtGui.QPixmap(img)
+        # self.pixmap = QtGui.QPixmap(img)
+        self.im = Image.open(str(img))
+        self.im.thumbnail(self.size)
         self.repaint()  # repaint() will trigger the paintEvent(self, event), this way the new pixmap will be drawn on the label
 
 class MyButton(QPushButton):
@@ -82,11 +99,11 @@ class Browser( QWidget):
         self.treeView.clicked.connect(self.on_treeView_clicked)
 
 
-        self.label = QLabel()
-        self.pixmap = QPixmap(os.getcwd() + '/eclipse.png')
-        self.label.setPixmap(self.pixmap)
+        # self.label = QLabel()
+        # self.pixmap = QPixmap(os.getcwd() + '/eclipse.png')
+        # self.label.setPixmap(self.pixmap)
 
-        self.label2 = ImageLabel("python.jpg")
+        self.label2 = ImageLabel("python.png")
 
         #Create some buttons
         self.closeButton = MyButton("Exit")
@@ -155,7 +172,7 @@ class Browser( QWidget):
 
         self.tableView = QtGui.QTableView()
         self.tableView.setSortingEnabled(True)
-
+        self.tableView.verticalHeader().setDefaultSectionSize(64);
         self.tableView.show()
 
         headers = ["Old Image Name", "Date Taken", "DateTime", "New Image name"]
@@ -195,6 +212,7 @@ class Browser( QWidget):
 
         fileName = self.fileSystemModel.fileName(indexItem)
         filePath = self.fileSystemModel.filePath(indexItem)
+        self.model.setBaseDir(filePath)
 
         # f = open(str(filePath), 'rb')
         # tags = exifread.process_file(f, stop_tag='DateTimeOriginal')
